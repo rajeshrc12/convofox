@@ -1,19 +1,49 @@
 import { Button } from "@workspace/ui/components/button"
 
-export function App() {
+const App = () => {
+  const handleLogin = () => {
+    window.location.href = "http://localhost:3000/auth/google"
+  }
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
+    <div className="min-h-screen bg-white">
+      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <div className="text-xl font-semibold tracking-tight text-slate-900">
+          Convo<span className="text-slate-500">fox</span>
         </div>
-        <div className="text-muted-foreground font-mono text-xs">
-          (Press <kbd>d</kbd> to toggle dark mode)
+
+        <Button onClick={handleLogin} className="rounded-full px-5">
+          Login
+        </Button>
+      </header>
+
+      <main className="mx-auto flex max-w-4xl flex-col items-center px-6 pt-24 text-center">
+        <div className="mb-6 rounded-full border border-slate-200 bg-slate-50 px-4 py-1 text-sm text-slate-600">
+          Secure Video Conferencing
         </div>
-      </div>
+
+        <h1 className="text-6xl font-semibold tracking-tight text-slate-900">
+          Connect with anyone
+          <span className="block text-slate-500">from anywhere, instantly</span>
+        </h1>
+
+        <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+          Host high-quality video meetings, collaborate in real time, share your
+          screen, and stay connected with secure and reliable conferencing.
+        </p>
+
+        <div className="mt-10 flex items-center gap-4">
+          <Button size="lg" onClick={handleLogin} className="rounded-full px-8">
+            Get Started
+          </Button>
+
+          <Button variant="outline" size="lg" className="rounded-full px-8">
+            Learn More
+          </Button>
+        </div>
+      </main>
     </div>
   )
 }
+
+export default App
