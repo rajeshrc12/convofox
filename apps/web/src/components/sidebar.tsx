@@ -1,5 +1,5 @@
 import { Button } from "@workspace/ui/components/button"
-import { LinkIcon } from "lucide-react"
+import { HomeIcon, LinkIcon } from "lucide-react"
 import { Link, useLocation } from "react-router"
 
 const Sidebar = () => {
@@ -7,8 +7,13 @@ const Sidebar = () => {
 
   const links = [
     {
-      name: "Meeting",
+      name: "Home",
       href: "/dashboard",
+      icon: HomeIcon,
+    },
+    {
+      name: "Meetings",
+      href: "/dashboard/meeting",
       icon: LinkIcon,
     },
   ]
