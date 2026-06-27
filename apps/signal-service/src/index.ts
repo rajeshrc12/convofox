@@ -25,14 +25,11 @@ io.on("connection", (socket) => {
   socket.on("join-meeting", ({ meetingId }) => {
     socket.join(meetingId)
 
-    io.to(meetingId).emit("user-joined", userId)
+    socket.to(meetingId).emit("user-joined", userId)
   })
 
   socket.on("send-message", ({ meetingId, message }) => {
-    io.to(meetingId).emit("receive-message", {
-      userId,
-      message,
-    })
+    io.to(meetingId).emit("receive-message", message)
   })
 
   socket.on("disconnect", () => {
