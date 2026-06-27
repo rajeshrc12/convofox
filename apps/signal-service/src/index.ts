@@ -17,16 +17,26 @@ const io = new Server(httpServer, {
 io.use(authenticateTokenSocketAuth)
 
 io.on("connection", (socket) => {
-  console.log(`Socket Id: ${socket.id}, User Id:${socket.data?.user?.id}`)
+  const socketId = socket.id
+  const userId = socket.data?.user?.id
 
-  socket.on("meeting", ({ id }) => {
-    console.log(`${socket.data?.user?.id} joined Meeting Id: ${id}`)
+  console.log(`Socket Id: ${socketId}, User Id: ${userId}`)
+
+  socket.on("join-meeting", ({ meetingId }) => {
+    socket.join(meetingId)
+
+    io.to(meetingId).emit("user-joined", userId)
+  })
+
+  socket.on("send-message", ({ meetingId, message }) => {
+    io.to(meetingId).emit("receive-message", {
+      userId,
+      message,
+    })
   })
 
   socket.on("disconnect", () => {
-    console.log(
-      `Disconnected: Socket Id: ${socket.id}, User Id:${socket.data?.user?.id}`
-    )
+    console.log(`Disconnected: Socket Id: ${socketId}, User Id: ${userId}`)
   })
 })
 
