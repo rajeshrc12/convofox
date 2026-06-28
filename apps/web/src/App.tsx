@@ -1,8 +1,9 @@
 import { Button } from "@workspace/ui/components/button"
+import { env } from "@/config/env"
 
 const App = () => {
   const handleLogin = () => {
-    window.location.href = "http://localhost:3000/auth/google"
+    window.location.href = `${env.USER_API_URL}/auth/google`
   }
 
   return (

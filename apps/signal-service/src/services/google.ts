@@ -1,8 +1,8 @@
-import { OAuth2Client } from "google-auth-library";
-import { env } from "@/config/env";
+import { OAuth2Client } from "google-auth-library"
+import { env } from "@/config/env"
 
 export const googleClient = new OAuth2Client(
   env.GOOGLE_CLIENT_ID,
   env.GOOGLE_CLIENT_SECRET,
-  "http://localhost:3000/auth/google/callback",
-);
+  env.GOOGLE_FALLBACK_URL
+)
