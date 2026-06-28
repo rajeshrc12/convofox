@@ -26,7 +26,17 @@ const MeetingId = () => {
       socket.off("candidate", handleCandidate)
 
       socket.disconnect()
+      // Stop camera & microphone
+      localStream.current?.getTracks().forEach((track) => track.stop())
 
+      // Remove video streams
+      if (localVideo.current) {
+        localVideo.current.srcObject = null
+      }
+
+      if (remoteVideo.current) {
+        remoteVideo.current.srcObject = null
+      }
       peerService.close()
     }
   }, [])
