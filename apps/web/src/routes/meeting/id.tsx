@@ -1,7 +1,7 @@
+import { useEffect, useRef, useState } from "react"
+
 import { peerService } from "@/service/peer"
 import { socket } from "@/socket"
-
-import { useEffect, useRef, useState } from "react"
 
 const MeetingId = () => {
   const localVideo = useRef<HTMLVideoElement>(null)
@@ -14,34 +14,14 @@ const MeetingId = () => {
   useEffect(() => {
     socket.connect()
 
-    startCamera()
+    registerSocketEvents()
 
-    socket.on("offer", handleOffer)
-    socket.on("answer", handleAnswer)
-    socket.on("candidate", handleCandidate)
+    initialize()
 
-    return () => {
-      socket.off("offer", handleOffer)
-      socket.off("answer", handleAnswer)
-      socket.off("candidate", handleCandidate)
-
-      socket.disconnect()
-      // Stop camera & microphone
-      localStream.current?.getTracks().forEach((track) => track.stop())
-
-      // Remove video streams
-      if (localVideo.current) {
-        localVideo.current.srcObject = null
-      }
-
-      if (remoteVideo.current) {
-        remoteVideo.current.srcObject = null
-      }
-      peerService.close()
-    }
+    return cleanup
   }, [])
 
-  async function startCamera(): Promise<void> {
+  async function initialize() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
@@ -53,40 +33,41 @@ const MeetingId = () => {
       localVideo.current.srcObject = stream
     }
 
+    peerService.initialize(stream, {
+      onTrack: handleRemoteTrack,
+      onIceCandidate: (candidate) => {
+        socket.emit("candidate", candidate)
+      },
+    })
+
     setReady(true)
   }
 
-  function createPeer(): void {
-    const stream = localStream.current
+  function registerSocketEvents() {
+    socket.on("offer", handleOffer)
+    socket.on("answer", handleAnswer)
+    socket.on("candidate", handleCandidate)
+  }
 
-    if (!stream) return
+  function unregisterSocketEvents() {
+    socket.off("offer", handleOffer)
+    socket.off("answer", handleAnswer)
+    socket.off("candidate", handleCandidate)
+  }
 
-    const pc = peerService.createPeer(stream)
-
-    pc.ontrack = (event: RTCTrackEvent) => {
-      if (remoteVideo.current) {
-        remoteVideo.current.srcObject = event.streams[0]
-      }
-    }
-
-    pc.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-      if (event.candidate) {
-        socket.emit("candidate", event.candidate)
-      }
+  function handleRemoteTrack(event: RTCTrackEvent) {
+    if (remoteVideo.current) {
+      remoteVideo.current.srcObject = event.streams[0]
     }
   }
 
-  async function call(): Promise<void> {
-    createPeer()
-
+  async function call() {
     const offer = await peerService.createOffer()
 
     socket.emit("offer", offer)
   }
 
-  async function handleOffer(offer: RTCSessionDescriptionInit): Promise<void> {
-    createPeer()
-
+  async function handleOffer(offer: RTCSessionDescriptionInit) {
     await peerService.setRemoteDescription(offer)
 
     const answer = await peerService.createAnswer()
@@ -94,16 +75,30 @@ const MeetingId = () => {
     socket.emit("answer", answer)
   }
 
-  async function handleAnswer(
-    answer: RTCSessionDescriptionInit
-  ): Promise<void> {
+  async function handleAnswer(answer: RTCSessionDescriptionInit) {
     await peerService.setRemoteDescription(answer)
   }
 
-  async function handleCandidate(
-    candidate: RTCIceCandidateInit
-  ): Promise<void> {
+  async function handleCandidate(candidate: RTCIceCandidateInit) {
     await peerService.addIceCandidate(candidate)
+  }
+
+  function cleanup() {
+    unregisterSocketEvents()
+
+    socket.disconnect()
+
+    localStream.current?.getTracks().forEach((track) => track.stop())
+
+    peerService.close()
+
+    if (localVideo.current) {
+      localVideo.current.srcObject = null
+    }
+
+    if (remoteVideo.current) {
+      remoteVideo.current.srcObject = null
+    }
   }
 
   return (
@@ -140,7 +135,7 @@ const MeetingId = () => {
           <button
             disabled={!ready}
             onClick={call}
-            className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="rounded-lg bg-blue-600 px-6 py-3 text-white"
           >
             Call
           </button>

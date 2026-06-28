@@ -9,10 +9,14 @@ class PeerService {
     ],
   }
 
-  createPeer(stream: MediaStream): RTCPeerConnection {
-    if (this.peer) {
-      return this.peer
+  initialize(
+    stream: MediaStream,
+    handlers: {
+      onTrack: (event: RTCTrackEvent) => void
+      onIceCandidate: (candidate: RTCIceCandidate) => void
     }
+  ) {
+    if (this.peer) return
 
     this.peer = new RTCPeerConnection(this.config)
 
@@ -20,52 +24,48 @@ class PeerService {
       this.peer!.addTrack(track, stream)
     })
 
-    return this.peer
-  }
+    this.peer.ontrack = handlers.onTrack
 
-  get connection(): RTCPeerConnection | null {
-    return this.peer
-  }
-
-  async createOffer(): Promise<RTCSessionDescriptionInit> {
-    if (!this.peer) {
-      throw new Error("Peer connection not created")
+    this.peer.onicecandidate = (event) => {
+      if (event.candidate) {
+        handlers.onIceCandidate(event.candidate)
+      }
     }
+  }
+
+  async createOffer() {
+    if (!this.peer) throw new Error("Peer not initialized")
 
     const offer = await this.peer.createOffer()
+
     await this.peer.setLocalDescription(offer)
 
     return offer
   }
 
-  async createAnswer(): Promise<RTCSessionDescriptionInit> {
-    if (!this.peer) {
-      throw new Error("Peer connection not created")
-    }
+  async createAnswer() {
+    if (!this.peer) throw new Error("Peer not initialized")
 
     const answer = await this.peer.createAnswer()
+
     await this.peer.setLocalDescription(answer)
 
     return answer
   }
 
-  async setRemoteDescription(
-    description: RTCSessionDescriptionInit
-  ): Promise<void> {
-    if (!this.peer) {
-      throw new Error("Peer connection not created")
-    }
+  async setRemoteDescription(description: RTCSessionDescriptionInit) {
+    if (!this.peer) throw new Error("Peer not initialized")
 
     await this.peer.setRemoteDescription(description)
   }
 
-  async addIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {
+  async addIceCandidate(candidate: RTCIceCandidateInit) {
     if (!this.peer) return
 
     await this.peer.addIceCandidate(candidate)
   }
 
-  close(): void {
+  close() {
     this.peer?.close()
     this.peer = null
   }
